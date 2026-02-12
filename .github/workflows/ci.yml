@@ -48,7 +48,7 @@ jobs:
           hl2sdk-manifests-ref: 'master'
           sdks: css
           configure-path: './sm-ext-common/configure.py'
-          configure-additional-flags: '--enable-optimize --enable-auto-versioning --ext-root "./"'
+          configure-additional-flags: '--enable-optimize --enable-auto-versioning --ext-root "."'
 
       - name: Upload package
         uses: actions/upload-artifact@v4
@@ -88,4 +88,5 @@ jobs:
           file: './gh-artifacts/*.tar.gz'
           tag: ${{ github.ref }}
           file_glob: true
+
 
