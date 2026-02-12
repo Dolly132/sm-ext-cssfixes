@@ -913,7 +913,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 #ifdef _WIN32
 			HMODULE pFunctionBinary = LoadLibrary(pPatch->pFunctionLibrary);
 #else
-			void* pFunctionBinary = dlopen(pPatch->pFunctionLibrary, RTLD_NOW);
+			void* pFunctionBinary = dlopen(pPatch->pFunctionLibrary, RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
 #endif
 			if(!pFunctionBinary)
 			{
@@ -1146,3 +1146,4 @@ uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSiz
 
 	return 0x00;
 }
+
