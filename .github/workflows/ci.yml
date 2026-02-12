@@ -51,7 +51,7 @@ jobs:
           configure-additional-flags: '--enable-optimize --enable-auto-versioning --ext-root "./"'
 
       - name: Upload package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
           path: ${{ steps.ambuild.outputs.package-path }}
@@ -88,3 +88,4 @@ jobs:
           file: './gh-artifacts/*.tar.gz'
           tag: ${{ github.ref }}
           file_glob: true
+
