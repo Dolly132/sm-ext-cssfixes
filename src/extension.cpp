@@ -139,6 +139,7 @@ struct SrcdsPatch
 	int occurrences = 1; // maximum(!) number of occurences to patch
 	bool functionCall = false; // true = FindFunctionCall (pPatchSignature = function symbol) | false = FindPattern
 	const char *pFunctionLibrary = ""; // library of function symbol pPatchSignature for functionCall = true
+	const unsigned char *backupSignature = ""; // The backup signature to search for (pattern) if symbol resolve failed.
 
 	struct Restore
 	{
@@ -765,8 +766,9 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			(unsigned char *)"\x90\x90\x90\x90\x90",
 			"bin/engine_srv.so",
 			0x7d1, 100,
-			true, "bin/libtier0_srv.so"
-		},
+			true, "bin/libtier0_srv.so",
+            (unsigned char *)"\xA1\x5C\x2A\x2A\x2A\x85\xC0\x79\x2A\xA1\x2A\x2A\x2A\x2A\x85\xC0\x7F\x2A\xC3\x2A\x2A\x2A\x2A\x2A\x6B\xC0\x34\x03\x05\x2A\x2A\x2A\x2A\x8B\x50\x2A\x85\xD2\x7E\x2A\x55\xB9\x01\x00\x00\x00\xBA\x2A\x2A\x2A\x2A\x89\xE5\x83\xEC\x0C\x8D\x45\x0C\x50\x31\xC0"
+		},   
 		// 11: fix server lagging resulting from too many ConMsgs due to packet spam
 		{
 			"_Z11NET_GetLongiP11netpacket_s",
@@ -775,7 +777,8 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			(unsigned char *)"\x90\x90\x90\x90\x90",
 			"bin/engine_srv.so",
 			0x800, 100,
-			true, "bin/libtier0_srv.so"
+			true, "bin/libtier0_srv.so",
+			(unsigned char *)"\x55\x31\xC9\xBA\x2A\x2A\x2A\x2A\x89\xE5\x83\xEC\x0C\x8D\x45\x0C\x50\x31\xC0\xFF\x75\x08"
 		},
 		// 13: CTriggerCamera::FollowTarget: Don't early return when the player handle is null
 		{
@@ -893,6 +896,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		}
 
 		pPatch->pAddress = (uintptr_t)memutils->ResolveSymbol(pBinary, pPatch->pSignature);
+
 #ifdef _WIN32
 		FreeLibrary(pBinary);
 #else
@@ -923,6 +927,12 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			}
 
 			pPatch->pSignatureAddress = (uintptr_t)memutils->ResolveSymbol(pFunctionBinary, (char *)pPatch->pPatchSignature);
+
+			if(!pPatch->pSignatureAddress && *(pPatch->backupSignature) != '\0')
+			{
+				// Check if this function has a backup signature so we can try to find it instead of instant failure.
+				pPatch->pSignatureAddress = (uintptr_t)memutils->FindPattern(pFunctionBinary, (char *)pPatch->backupSignature, strlen(pPatch->backupSignature));
+			}
 #ifdef _WIN32
 			FreeLibrary(pFunctionBinary);
 #else
