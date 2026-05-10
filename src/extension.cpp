@@ -931,7 +931,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			// For testing purpose
 			if (*(pPatch->backupSignature) != '\0')
 			{
-				unitptr_t testAddr = (uintptr_t)memutils->FindPattern(pFunctionBinary, pPatch->backupSignature, strlen(pPatch->backupSignature));
+				uintptr_t testAddr = (uintptr_t)memutils->FindPattern(pFunctionBinary, pPatch->backupSignature, strlen(pPatch->backupSignature));
 				if (testAddr)
 				{
 					g_pSM->LogMessage(myself, "Found backup signature for %s at %p", (char *)pPatch->pPatchSignature, testAddr);
