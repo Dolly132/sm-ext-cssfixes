@@ -928,6 +928,20 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 			pPatch->pSignatureAddress = (uintptr_t)memutils->ResolveSymbol(pFunctionBinary, (char *)pPatch->pPatchSignature);
 
+			// For testing purpose
+			if (*(pPatch->backupSignature) != '\0')
+			{
+				unitptr_t testAddr = (uintptr_t)memutils->FindPattern(pFunctionBinary, pPatch->backupSignature, strlen(pPatch->backupSignature));
+				if (testAddr)
+				{
+					g_pSM->LogMessage(myself, "Found backup signature for %s at %p", (char *)pPatch->pPatchSignature, testAddr);
+				}
+				else
+				{
+					g_pSM->LogMessage(myself, "Could not find backup signature for %s", (char *)pPatch->pPatchSignature);
+				}
+			}
+
 			if(!pPatch->pSignatureAddress && *(pPatch->backupSignature) != '\0')
 			{
 				// Check if this function has a backup signature so we can try to find it instead of instant failure.
