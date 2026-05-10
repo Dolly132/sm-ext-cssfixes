@@ -139,7 +139,7 @@ struct SrcdsPatch
 	int occurrences = 1; // maximum(!) number of occurences to patch
 	bool functionCall = false; // true = FindFunctionCall (pPatchSignature = function symbol) | false = FindPattern
 	const char *pFunctionLibrary = ""; // library of function symbol pPatchSignature for functionCall = true
-	const unsigned char *backupSignature = ""; // The backup signature to search for (pattern) if symbol resolve failed.
+	const unsigned char *backupSignature = NULL; // The backup signature to search for (pattern) if symbol resolve failed.
 
 	struct Restore
 	{
@@ -928,7 +928,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 			pPatch->pSignatureAddress = (uintptr_t)memutils->ResolveSymbol(pFunctionBinary, (char *)pPatch->pPatchSignature);
 
-			if(!pPatch->pSignatureAddress && *(pPatch->backupSignature) != '\0')
+			if(!pPatch->pSignatureAddress && pPatch->backupSignature != NULL)
 			{
 				// Check if this function has a backup signature so we can try to find it instead of instant failure.
 				pPatch->pSignatureAddress = (uintptr_t)memutils->FindPattern(pFunctionBinary, (char *)pPatch->backupSignature, strlen(pPatch->backupSignature));
