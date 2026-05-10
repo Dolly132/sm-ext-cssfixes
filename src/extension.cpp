@@ -931,7 +931,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			// For testing purpose
 			if (*(pPatch->backupSignature) != '\0')
 			{
-				uintptr_t testAddr = (uintptr_t)memutils->FindPattern(pFunctionBinary, pPatch->backupSignature, strlen(pPatch->backupSignature));
+				uintptr_t testAddr = (uintptr_t)>FindPatternDolly(pFunctionBinary, pPatch->backupSignature);
 				if (testAddr)
 				{
 					g_pSM->LogMessage(myself, "Found backup signature for %s at %p", (char *)pPatch->pPatchSignature, testAddr);
@@ -945,7 +945,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			if(!pPatch->pSignatureAddress && *(pPatch->backupSignature) != '\0')
 			{
 				// Check if this function has a backup signature so we can try to find it instead of instant failure.
-				pPatch->pSignatureAddress = (uintptr_t)memutils->FindPattern(pFunctionBinary, pPatch->backupSignature, strlen(pPatch->backupSignature));
+				pPatch->pSignatureAddress = (uintptr_t)memutils->FindPatternDolly(pFunctionBinary, pPatch->backupSignature);
 			}
 #ifdef _WIN32
 			FreeLibrary(pFunctionBinary);
@@ -1171,4 +1171,76 @@ uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSiz
 	return 0x00;
 }
 
+static int HexToByte(const char *hex)
+{
+	char buf[3] = { hex[0], hex[1], 0 };
+	return static_cast<int>(strtoul(buf, nullptr, 16));
+}
 
+void *FindPatternDolly(const void *libPtr, const char *signature)
+{
+	DynLibInfo lib;
+
+	memset(&lib, 0, sizeof(DynLibInfo));
+
+	if (!GetLibraryInfo(libPtr, lib))
+		return nullptr;
+
+	uint8_t *start = reinterpret_cast<uint8_t *>(lib.baseAddress);
+	uint8_t *end = start + lib.memorySize;
+
+	const char *pat = signature;
+
+	for (uint8_t *cur = start; cur < end; cur++)
+	{
+		const char *patCur = pat;
+		uint8_t *memCur = cur;
+
+		bool found = true;
+
+		while (*patCur)
+		{
+			// Skip spaces
+			if (*patCur == ' ')
+			{
+				patCur++;
+				continue;
+			}
+
+			// Wildcard
+			if (*patCur == '?')
+			{
+				patCur++;
+
+				if (*patCur == '?')
+					patCur++;
+
+				memCur++;
+				continue;
+			}
+
+			// Ensure we still have 2 hex chars
+			if (!isxdigit(patCur[0]) || !isxdigit(patCur[1]))
+			{
+				found = false;
+				break;
+			}
+
+			int byte = HexToByte(patCur);
+
+			if (*memCur != static_cast<uint8_t>(byte))
+			{
+				found = false;
+				break;
+			}
+
+			patCur += 2;
+			memCur++;
+		}
+
+		if (found)
+			return cur;
+	}
+
+	return nullptr;
+}
