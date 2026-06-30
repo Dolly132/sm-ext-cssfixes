@@ -139,7 +139,6 @@ struct SrcdsPatch
 	int occurrences = 1; // maximum(!) number of occurences to patch
 	bool functionCall = false; // true = FindFunctionCall (pPatchSignature = function symbol) | false = FindPattern
 	const char *pFunctionLibrary = ""; // library of function symbol pPatchSignature for functionCall = true
-	const char *backupSignature = ""; // The backup signature to search for (pattern) if symbol resolve failed.
 
 	struct Restore
 	{
@@ -761,24 +760,22 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		// 10: fix server lagging resulting from too many ConMsgs due to packet spam
 		{
 			"_ZN8CNetChan19ProcessPacketHeaderEP11netpacket_s",
-			(unsigned char *)"_Z6ConMsgPKcz",
-			"xxxxx",
+			(unsigned char *)"\x8B\x45\x08\x05\xA0\x2A\x2A\x2A\xFF\x75\xC8\x53\x50\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A", // Pattern for first ConMsg call.
+			"xxxxx???xxxxxx????x????",
 			(unsigned char *)"\x90\x90\x90\x90\x90",
 			"bin/engine_srv.so",
 			0x7d1, 100,
-			true, "bin/libtier0_srv.so",
-            "\xA1\x5C\x2A\x2A\x2A\x85\xC0\x79\x2A\xA1\x2A\x2A\x2A\x2A\x85\xC0\x7F\x2A\xC3\x2A\x2A\x2A\x2A\x2A\x6B\xC0\x34\x03\x05\x2A\x2A\x2A\x2A\x8B\x50\x2A\x85\xD2\x7E\x2A\x55\xB9\x01\x00\x00\x00\xBA\x2A\x2A\x2A\x2A\x89\xE5\x83\xEC\x0C\x8D\x45\x0C\x50\x31\xC0"
-		},   
+			true
+		},
 		// 11: fix server lagging resulting from too many ConMsgs due to packet spam
 		{
 			"_Z11NET_GetLongiP11netpacket_s",
-			(unsigned char *)"Msg",
-			"xxxxx",
+			(unsigned char *)"\x83\xC4\x0C\x50\xFF\xB6\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A", // Pattern for first Msg call.
+			"xxxxxx????x????x????",
 			(unsigned char *)"\x90\x90\x90\x90\x90",
 			"bin/engine_srv.so",
 			0x800, 100,
-			true, "bin/libtier0_srv.so",
-			"\x55\x31\xC9\xBA\x2A\x2A\x2A\x2A\x89\xE5\x83\xEC\x0C\x8D\x45\x0C\x50\x31\xC0\xFF\x75\x08"
+			true
 		},
 		// 13: CTriggerCamera::FollowTarget: Don't early return when the player handle is null
 		{
@@ -881,12 +878,14 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	for(size_t i = 0; i < gs_Patches.size(); i++)
 	{
 		struct SrcdsPatch *pPatch = &gs_Patches[i];
-		int PatchLen = strlen(pPatch->pPatchPattern);
+
+		// PatchLen has to be the number of opcodes for a function call which is just E8 followed by 4 byes
+		int PatchLen = !pPatch->functionCall ? strlen(pPatch->pPatchPattern) : strlen(pPatch->pPatch);
 
 #ifdef _WIN32
 		HMODULE pBinary = LoadLibrary(pPatch->pLibrary);
 #else
-		void *pBinary = dlopen(pPatch->pLibrary, RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
+		void *pBinary = dlopen(pPatch->pLibrary, RTLD_NOW);
 #endif
 		if(!pBinary)
 		{
@@ -896,7 +895,6 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		}
 
 		pPatch->pAddress = (uintptr_t)memutils->ResolveSymbol(pBinary, pPatch->pSignature);
-
 #ifdef _WIN32
 		FreeLibrary(pBinary);
 #else
@@ -912,62 +910,26 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 		SrcdsPatch::Restore **ppRestore = &pPatch->pRestore;
 
+		uintptr_t functionAddress = 0x00; // For patches that NOP function calls.
+
+		// If it's a function call patch, resolve the target function address ONCE before applying patches
 		if(pPatch->functionCall)
 		{
-#ifdef _WIN32
-			HMODULE pFunctionBinary = LoadLibrary(pPatch->pFunctionLibrary);
-#else
-			void* pFunctionBinary = dlopen(pPatch->pFunctionLibrary, RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
-#endif
-			if(!pFunctionBinary)
-			{
-				g_pSM->LogError(myself, "Could not dlopen %s", pPatch->pFunctionLibrary);
-				bSuccess = false;
-				continue;
-			}
-
-			pPatch->pSignatureAddress = (uintptr_t)memutils->ResolveSymbol(pFunctionBinary, (char *)pPatch->pPatchSignature);
-
-			// For testing purpose
-			if (*(pPatch->backupSignature) != '\0')
-			{
-				uintptr_t testAddr = (uintptr_t)>FindPatternDolly(pFunctionBinary, pPatch->backupSignature);
-				if (testAddr)
-				{
-					g_pSM->LogMessage(myself, "Found backup signature for %s at %p", (char *)pPatch->pPatchSignature, testAddr);
-				}
-				else
-				{
-					g_pSM->LogMessage(myself, "Could not find backup signature for %s", (char *)pPatch->pPatchSignature);
-				}
-			}
-
-			if(!pPatch->pSignatureAddress && *(pPatch->backupSignature) != '\0')
-			{
-				// Check if this function has a backup signature so we can try to find it instead of instant failure.
-				pPatch->pSignatureAddress = (uintptr_t)memutils->FindPatternDolly(pFunctionBinary, pPatch->backupSignature);
-			}
-#ifdef _WIN32
-			FreeLibrary(pFunctionBinary);
-#else
-			dlclose(pFunctionBinary);
-#endif
-			if(!pPatch->pSignatureAddress)
-			{
-				g_pSM->LogError(myself, "Could not find patch signature symbol: %s in %s (%p)",
-					(char *)pPatch->pPatchSignature, pPatch->pFunctionLibrary, pFunctionBinary);
-				bSuccess = false;
-				continue;
-			}
+			uintptr_t startAddr = FindPattern(pPatch->pAddress, pPatch->pPatchSignature, pPatch->pPatchPattern, pPatch->range);
+			if(startAddr)
+				functionAddress = FindFunctionAddressByPattern(startAddr, strlen(pPatch->pPatchPattern));
 		}
 
 		uintptr_t ofs = 0;
 		int found;
 		for(found = 0; found < pPatch->occurrences; found++)
 		{
-			uintptr_t pPatchAddress;
+			uintptr_t pPatchAddress = 0x00;
 			if(pPatch->functionCall)
-				pPatchAddress = FindFunctionCall(pPatch->pAddress + ofs, pPatch->pSignatureAddress, pPatch->range - ofs);
+			{
+				if(functionAddress)
+					pPatchAddress = FindFunctionCall(pPatch->pAddress + ofs, functionAddress, pPatch->range - ofs);
+			}
 			else
 				pPatchAddress = FindPattern(pPatch->pAddress + ofs, pPatch->pPatchSignature, pPatch->pPatchPattern, pPatch->range - ofs);
 
@@ -1095,7 +1057,7 @@ void CSSFixes::SDK_OnUnload()
 	for(size_t i = 0; i < gs_Patches.size(); i++)
 	{
 		struct SrcdsPatch *pPatch = &gs_Patches[i];
-		int PatchLen = strlen(pPatch->pPatchPattern);
+		int PatchLen = !pPatch->functionCall ? strlen(pPatch->pPatchPattern) : strlen(pPatch->pPatch);
 
 		SrcdsPatch::Restore *pRestore = pPatch->pRestore;
 		while(pRestore)
@@ -1171,76 +1133,16 @@ uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSiz
 	return 0x00;
 }
 
-static int HexToByte(const char *hex)
+uintptr_t FindFunctionAddressByPattern(uintptr_t StartAddr, size_t MaxSize)
 {
-	char buf[3] = { hex[0], hex[1], 0 };
-	return static_cast<int>(strtoul(buf, nullptr, 16));
-}
+	// Find the E8 opcode so we can calculate the desired function's address.
+	// The E8 opcode and what follows it (The 4 bytes) have to be at the end of the pattern.
+	uintptr_t E8Addr = StartAddr + (MaxSize - 5);
 
-void *FindPatternDolly(const void *libPtr, const char *signature)
-{
-	DynLibInfo lib;
+	// Just a safety chekc
+	if (*reinterpret_cast<unsigned char *>(E8Addr) != 0xE8)
+		return 0x00;
 
-	memset(&lib, 0, sizeof(DynLibInfo));
-
-	if (!GetLibraryInfo(libPtr, lib))
-		return nullptr;
-
-	uint8_t *start = reinterpret_cast<uint8_t *>(lib.baseAddress);
-	uint8_t *end = start + lib.memorySize;
-
-	const char *pat = signature;
-
-	for (uint8_t *cur = start; cur < end; cur++)
-	{
-		const char *patCur = pat;
-		uint8_t *memCur = cur;
-
-		bool found = true;
-
-		while (*patCur)
-		{
-			// Skip spaces
-			if (*patCur == ' ')
-			{
-				patCur++;
-				continue;
-			}
-
-			// Wildcard
-			if (*patCur == '?')
-			{
-				patCur++;
-
-				if (*patCur == '?')
-					patCur++;
-
-				memCur++;
-				continue;
-			}
-
-			// Ensure we still have 2 hex chars
-			if (!isxdigit(patCur[0]) || !isxdigit(patCur[1]))
-			{
-				found = false;
-				break;
-			}
-
-			int byte = HexToByte(patCur);
-
-			if (*memCur != static_cast<uint8_t>(byte))
-			{
-				found = false;
-				break;
-			}
-
-			patCur += 2;
-			memCur++;
-		}
-
-		if (found)
-			return cur;
-	}
-
-	return nullptr;
+	uint32_t offset = *reinterpret_cast<int32_t *>(E8Addr + 1);
+	return E8Addr + 5 + offset;
 }
