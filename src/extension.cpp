@@ -180,7 +180,7 @@ typedef bool (*ShouldHitFunc_t)( IHandleEntity *pHandleEntity, int contentsMask 
 
 uintptr_t FindPattern(uintptr_t BaseAddr, const unsigned char *pData, const char *pPattern, size_t MaxSize);
 uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSize);
-
+uintptr_t FindFunctionAddressByPattern(uintptr_t StartAddr, size_t MaxSize);
 
 /**
  * @file extension.cpp
