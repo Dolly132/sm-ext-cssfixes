@@ -919,7 +919,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			if(startAddr)
 			{
 				functionAddress = FindFunctionAddressByPattern(startAddr, strlen(pPatch->pPatchPattern));
-				g_pSM->LogMessage("Found Function Address for %s (%p)", pPatch->pSignature, functionAddress);
+				g_pSM->LogMessage(myself, "Found Function Address for %s (%p)", pPatch->pSignature, functionAddress);
 			}
 		}
 
@@ -933,7 +933,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 				if(functionAddress)
 				{
 					pPatchAddress = FindFunctionCall(pPatch->pAddress + ofs, functionAddress, pPatch->range - ofs);
-					g_pSM->LogMessage("Found Signature (%d) for %s (%p)", found, pPatch->pSignature, pPatchAddress);
+					g_pSM->LogMessage(myself, "Found Signature (%d) for %s (%p)", found, pPatch->pSignature, pPatchAddress);
 				}
 			}
 			else
