@@ -917,7 +917,10 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		{
 			uintptr_t startAddr = FindPattern(pPatch->pAddress, pPatch->pPatchSignature, pPatch->pPatchPattern, pPatch->range);
 			if(startAddr)
+			{
 				functionAddress = FindFunctionAddressByPattern(startAddr, strlen(pPatch->pPatchPattern));
+				g_pSM->LogMessage("Found Function Address for %s (%p)", pPatch->pSignature, functionAddress);
+			}
 		}
 
 		uintptr_t ofs = 0;
@@ -928,7 +931,10 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			if(pPatch->functionCall)
 			{
 				if(functionAddress)
+				{
 					pPatchAddress = FindFunctionCall(pPatch->pAddress + ofs, functionAddress, pPatch->range - ofs);
+					g_pSM->LogMessage("Found Signature (%d) for %s (%p)", found, pPatch->pSignature, pPatchAddress);
+				}
 			}
 			else
 				pPatchAddress = FindPattern(pPatch->pAddress + ofs, pPatch->pPatchSignature, pPatch->pPatchPattern, pPatch->range - ofs);
