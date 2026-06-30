@@ -5,11 +5,11 @@ on:
     branches:
       - master
       - main
-      - main-dollytest
     tags:
       - '*'
   pull_request:
     branches:
+      - main-dollytest
       - master
       - main
   workflow_dispatch:
