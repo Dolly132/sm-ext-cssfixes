@@ -880,7 +880,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		struct SrcdsPatch *pPatch = &gs_Patches[i];
 
 		// PatchLen has to be the number of opcodes for a function call which is just E8 followed by 4 byes
-		int PatchLen = !pPatch->functionCall ? strlen(pPatch->pPatchPattern) : strlen(pPatch->pPatch);
+		int PatchLen = !pPatch->functionCall ? strlen(pPatch->pPatchPattern) : strlen(reinterpret_cast<const char*>(pPatch->pPatch));
 
 #ifdef _WIN32
 		HMODULE pBinary = LoadLibrary(pPatch->pLibrary);
@@ -1057,7 +1057,7 @@ void CSSFixes::SDK_OnUnload()
 	for(size_t i = 0; i < gs_Patches.size(); i++)
 	{
 		struct SrcdsPatch *pPatch = &gs_Patches[i];
-		int PatchLen = !pPatch->functionCall ? strlen(pPatch->pPatchPattern) : strlen(pPatch->pPatch);
+		int PatchLen = !pPatch->functionCall ? strlen(pPatch->pPatchPattern) : strlen(reinterpret_cast<const char*>(pPatch->pPatch));
 
 		SrcdsPatch::Restore *pRestore = pPatch->pRestore;
 		while(pRestore)
