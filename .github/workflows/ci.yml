@@ -9,9 +9,9 @@ on:
       - '*'
   pull_request:
     branches:
-      - main-dollytest
       - master
       - main
+      - main-dollytest
   workflow_dispatch:
 
 jobs:
