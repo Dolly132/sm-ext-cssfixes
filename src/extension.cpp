@@ -874,6 +874,16 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		});
 	}
 
+	// 13: Set View punch angles to 0 in CGameMovement::PlayerRoughLandingEffects
+	// Line: player->m_Local.m_vecPunchAngle.Set( ROLL, player->m_Local.m_flFallVelocity * 0.013 );
+	gs_Patches.push_back({
+		"_ZN13CGameMovement25PlayerRoughLandingEffectsEf.part.0",
+		(unsigned char *)"\xF2\x0F\x59\x05\x00\x00\x00\x00\xF2\x0F\x5A\xC8",
+		"xxxx????xxxx",
+		(unsigned char *)"\x66\x0F\x57\xC0\x90\x90\x90\x90\xF2\x0F\x5A\xC8",
+		"cstrike/bin/server_srv.so"
+	});
+
 	// Apply all patches
 	for(size_t i = 0; i < gs_Patches.size(); i++)
 	{
