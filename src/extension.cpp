@@ -826,7 +826,17 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	}
 
 	// 10: Set View punch angles to 0 in CGameMovement::PlayerRoughLandingEffects
-	// 'jz short loc_48C267' to NOP NOP so prediction updates always fire
+	// line: player->m_Local.m_vecPunchAngle.Set( ROLL, player->m_Local.m_flFallVelocity * 0.013 );
+	// mulsd xmm0, ds:qword_8D0C58 -> replaced with xorpd xmm0, xmm0 + NOPs
+	gs_Patches.push_back({
+		"_ZN13CGameMovement25PlayerRoughLandingEffectsEf.part.0",
+		(unsigned char *)"\xF2\x0F\x59\x05\x00\x00\x00\x00\xF2\x0F\x5A\xC8",
+		"xxxx????xxxx",
+		(unsigned char *)"\x66\x0F\x57\xC0\x90\x90\x90\x90\xF2\x0F\x5A\xC8",
+		"cstrike/bin/server_srv.so"
+	});
+
+	// Patch 'jz short loc_48C267' to NOP NOP so prediction updates always fire
 	gs_Patches.push_back({
 		"_ZN13CGameMovement25PlayerRoughLandingEffectsEf.part.0",
 		(unsigned char *)"\x74\x26\x8B\x83\x80\x08\x00\x00", // jz + mov eax, [ebx+880h]
