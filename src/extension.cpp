@@ -694,7 +694,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			(unsigned char *)"\x0F\x82\xC4\x03\x00\x00\x83\xEC\x08\x6A\x10\x53\xE8\xF1\xFA\xF4\xFF",
 			"xx????xx?x?xx????",
 			(unsigned char *)"\x0F\x82\xC4\x03\x00\x00\x83\xEC\x08\x6A\x10\x53\x90\x90\x90\x90\x90",
-			"-----------+++++",
+			"------------+++++",
 			"cstrike/bin/server_srv.so"
 		},
 		// 1: player_speedmod should not turn off flashlight
