@@ -15,7 +15,7 @@ on:
 
 jobs:
   build-release-extension:
-    uses: Dolly132/ci-workflows/.github/workflows/shared_build_release_am_extension.yml@clang-update
+    uses: Dolly132/ci-workflows/.github/workflows/shared_build_release_am_extension.yml@update-clang
     with:
       sdks: "css"
       os-list: '["ubuntu-22.04"]'
