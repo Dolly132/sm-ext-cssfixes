@@ -659,7 +659,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			pRestore->pPatchAddress = pPatchAddress;
 			pRestore->pOriginal = (unsigned char *)malloc(PatchLen * sizeof(unsigned char));
 
-			Khook::Memory::SetAccess((void *)pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_WRITE|SH_MEM_EXEC);
+			Khook::Memory::SetAccess((void *)pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::Flags::WRITE | KHook::Memory::EXECUTE);
 			for (int j = 0; j < PatchLen; j++)
 			{
 				if (pPatch->pPatchApplyMask[j] == '+')
@@ -668,7 +668,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 					*(unsigned char *)(pPatchAddress + j) = pPatch->pPatch[j];
 				}
 			}
-			Khook::Memory::SetAccess((void *)pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_EXEC);
+			Khook::Memory::SetAccess((void *)pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::EXECUTE);
 
 			ppRestore = &((*ppRestore)->pNext);
 		}
@@ -708,7 +708,7 @@ void CSSFixes::SDK_OnUnload()
 			if (!pRestore->pOriginal)
 				break;
 
-			Khook::Memory::SetAccess((void *)pRestore->pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_WRITE|SH_MEM_EXEC);
+			Khook::Memory::SetAccess((void *)pRestore->pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::Flags::WRITE | KHook::Memory::EXECUTE);
 			for (int j = 0; j < PatchLen; j++)
 			{
 				if (pPatch->pPatchApplyMask[j] == '+')
@@ -716,7 +716,7 @@ void CSSFixes::SDK_OnUnload()
 					*(unsigned char *)(pRestore->pPatchAddress + j) = pRestore->pOriginal[j];
 				}
 			}
-			Khook::Memory::SetAccess((void *)pRestore->pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_EXEC);
+			Khook::Memory::SetAccess((void *)pRestore->pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::EXECUTE);
 
 			free(pRestore->pOriginal);
 			pRestore->pOriginal = NULL;
