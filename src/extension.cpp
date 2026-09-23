@@ -32,7 +32,7 @@
 #include "extension.h"
 #include "convarhelper.h"
 #include "iplayerinfo.h"
-#include <khook/memory.hpp>
+#include <sh_memory.h>
 #include <IEngineTrace.h>
 #include <server_class.h>
 #include <ispatialpartition.h>
@@ -659,7 +659,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			pRestore->pPatchAddress = pPatchAddress;
 			pRestore->pOriginal = (unsigned char *)malloc(PatchLen * sizeof(unsigned char));
 
-			Khook::Memory::SetAccess((void *)pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::Flags::WRITE | KHook::Memory::EXECUTE);
+			SourceHook::SetMemAccess((void *)pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_WRITE|SH_MEM_EXEC);
 			for (int j = 0; j < PatchLen; j++)
 			{
 				if (pPatch->pPatchApplyMask[j] == '+')
@@ -668,7 +668,7 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 					*(unsigned char *)(pPatchAddress + j) = pPatch->pPatch[j];
 				}
 			}
-			Khook::Memory::SetAccess((void *)pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::EXECUTE);
+			SourceHook::SetMemAccess((void *)pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_EXEC);
 
 			ppRestore = &((*ppRestore)->pNext);
 		}
@@ -708,7 +708,7 @@ void CSSFixes::SDK_OnUnload()
 			if (!pRestore->pOriginal)
 				break;
 
-			Khook::Memory::SetAccess((void *)pRestore->pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::Flags::WRITE | KHook::Memory::EXECUTE);
+			SourceHook::SetMemAccess((void *)pRestore->pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_WRITE|SH_MEM_EXEC);
 			for (int j = 0; j < PatchLen; j++)
 			{
 				if (pPatch->pPatchApplyMask[j] == '+')
@@ -716,7 +716,7 @@ void CSSFixes::SDK_OnUnload()
 					*(unsigned char *)(pRestore->pPatchAddress + j) = pRestore->pOriginal[j];
 				}
 			}
-			Khook::Memory::SetAccess((void *)pRestore->pPatchAddress, PatchLen, KHook::Memory::Flags::READ | KHook::Memory::EXECUTE);
+			SourceHook::SetMemAccess((void *)pRestore->pPatchAddress, PatchLen, SH_MEM_READ|SH_MEM_EXEC);
 
 			free(pRestore->pOriginal);
 			pRestore->pOriginal = NULL;
