@@ -288,9 +288,9 @@ bool CSSFixes::SDK_OnLoad(char *error, size_t maxlength, bool late)
 			(unsigned char *)"\x90\x90\x90\x90\x90\x90\x90\x8B\x83",
 			"+++++++--",
 #elif defined KE_ARCH_X64
-			(unsigned char *)"\xC6\x80\x91\x01\x00\x00\x00\x8B\x83",
+			(unsigned char *)"\xC6\x80\x91\x01\x00\x00\x00\x41\x8B",
 			"xxxxxxxxx",
-			(unsigned char *)"\x90\x90\x90\x90\x90\x90\x90\x8B\x83",
+			(unsigned char *)"\x90\x90\x90\x90\x90\x90\x90\x41\x8B",
 			"+++++++--",
 #endif
 			SERVER_BIN,
@@ -770,8 +770,8 @@ uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSiz
 			CallAddr += reinterpret_cast<uintptr_t>(pMemory + i + 5);
 #elif defined KE_ARCH_X64
 			int32_t offset = *reinterpret_cast<int32_t *>(pMemory + i + 1);
-			uintptr_t CallAddr = reinterpret_cast<uintptr_t>(pMemory + i + 5) + offset;
-#else
+			uintptr_t CallAddr = static_cast<uintptr_t>(static_cast<int64_t>(reinterpret_cast<uintptr_t>(pMemory + i + 5)) + static_cast<int64_t>(offset));
+#endif
 			#error "unsupported architecture"
 #endif
 			if (CallAddr == Function)
