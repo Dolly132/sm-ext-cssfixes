@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - main
+      - test-x64
     tags:
       - "*"
   pull_request:
@@ -14,7 +15,7 @@ on:
 
 jobs:
   build-release-extension:
-    uses: srcdslab/ci-workflows/.github/workflows/shared_build_release_am_extension.yml@v1
+    uses: Dolly132/ci-workflows/.github/workflows/shared_build_release_am_extension.yml@main
     with:
       sdks: "css"
-      os-list: '["ubuntu-24.04"]'
+      os-list: '["ubuntu-22.04"]'
