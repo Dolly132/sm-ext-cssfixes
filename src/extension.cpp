@@ -771,7 +771,7 @@ uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSiz
 #elif defined KE_ARCH_X64
 			int32_t offset = *reinterpret_cast<int32_t *>(pMemory + i + 1);
 			uintptr_t CallAddr = static_cast<uintptr_t>(static_cast<int64_t>(reinterpret_cast<uintptr_t>(pMemory + i + 5)) + static_cast<int64_t>(offset));
-#endif
+#else
 			#error "unsupported architecture"
 #endif
 			if (CallAddr == Function)
