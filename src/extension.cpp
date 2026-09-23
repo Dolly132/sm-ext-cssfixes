@@ -765,8 +765,8 @@ uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSiz
 	{
 		if (pMemory[i] == 0xE8) // CALL
 		{
-			uint32_t offset = *reinterpret_cast<int32_t *>((uintptr_t)pMemory + 1);
-			uintptr_t CallAddr = (uintptr_t)pMemory + 5 + offset;
+			uint32_t offset = *reinterpret_cast<int32_t *>((uintptr_t)pMemory + i + 1);
+			uintptr_t CallAddr = (uintptr_t)pMemory + i + 5 + offset;
 
 			if (CallAddr == Function)
 				return (uintptr_t)(pMemory + i);
