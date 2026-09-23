@@ -765,15 +765,9 @@ uintptr_t FindFunctionCall(uintptr_t BaseAddr, uintptr_t Function, size_t MaxSiz
 	{
 		if (pMemory[i] == 0xE8) // CALL
 		{
-#if defined KE_ARCH_X86
-			uintptr_t CallAddr = *reinterpret_cast<uint32_t *>(pMemory + i + 1);
-			CallAddr += reinterpret_cast<uintptr_t>(pMemory + i + 5);
-#elif defined KE_ARCH_X64
-			int32_t offset = *reinterpret_cast<int32_t *>(pMemory + i + 1);
-			uintptr_t CallAddr = static_cast<uintptr_t>(static_cast<int64_t>(reinterpret_cast<uintptr_t>(pMemory + i + 5)) + static_cast<int64_t>(offset));
-#else
-			#error "unsupported architecture"
-#endif
+			uint32_t offset = *reinterpret_cast<int32_t *>((uintptr_t)pMemory + 1);
+			uintptr_t CallAddr = (uintptr_t)pMemory + 5 + offset;
+
 			if (CallAddr == Function)
 				return (uintptr_t)(pMemory + i);
 
